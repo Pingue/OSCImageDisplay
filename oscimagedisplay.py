@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pygame
 from pythonosc.dispatcher import Dispatcher
-from pythonosc.osc_server import ThreadingOSCUDPServer
+from pythonosc.osc_server import OSCUDPServer
 
 DEFAULT_PORT = 1340
 PREFIX = "/oscimagedisplay/"
@@ -173,7 +173,7 @@ def make_server(host: str, port: int, base_dir: Path, commands: "queue.Queue"):
 
     dispatcher = Dispatcher()
     dispatcher.set_default_handler(handler)
-    return ThreadingOSCUDPServer((host, port), dispatcher)
+    return OSCUDPServer((host, port), dispatcher)
 
 
 # --------------------------------------------------------------------------
