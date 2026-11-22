@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pygame
 from pythonosc.dispatcher import Dispatcher
-from pythonosc.osc_server import ThreadingOSCUDPServer
+from pythonosc.osc_server import BlockingOSCUDPServer
 
 DEFAULT_PORT = 1340
 PREFIX = "/oscimagedisplay/"
@@ -157,7 +157,9 @@ def parse_command(address: str, args, base_dir: Path) -> "Command | None":
 
 
 def make_server(host: str, port: int, base_dir: Path, commands: "queue.Queue"):
-    """Build the OSC server. The handler only parses/validates and enqueues;
+    """Build the OSC server. Deliberately single-threaded (not Threading...):
+    a thread per packet can reorder messages sent back to back. The handler only
+    parses/validates and enqueues, so it is fast enough;
     the main thread owns all pygame work."""
 
     def handler(address, *args):
@@ -173,7 +175,7 @@ def make_server(host: str, port: int, base_dir: Path, commands: "queue.Queue"):
 
     dispatcher = Dispatcher()
     dispatcher.set_default_handler(handler)
-    return ThreadingOSCUDPServer((host, port), dispatcher)
+    return BlockingOSCUDPServer((host, port), dispatcher)
 
 
 # --------------------------------------------------------------------------

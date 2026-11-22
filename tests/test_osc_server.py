@@ -37,3 +37,13 @@ def test_bad_messages_are_dropped(server):
     client.send_message("/oscimagedisplay/show", [])  # sentinel: arrives last
     assert commands.get(timeout=2) == Command("show")
     assert commands.empty()
+
+
+def test_messages_are_processed_in_order(server):
+    # A threaded server can reorder packets sent back to back (e.g. hide before
+    # the image that preceded it), so ordering must be preserved.
+    client, commands, _ = server
+    for i in range(300):
+        client.send_message("/oscimagedisplay/fade", [float(i)])
+    received = [commands.get(timeout=5).value for _ in range(300)]
+    assert received == [float(i) for i in range(300)]
