@@ -1,4 +1,5 @@
 import queue
+import socketserver
 import threading
 
 import pytest
@@ -14,13 +15,13 @@ def server(tmp_path):
     srv = make_server("127.0.0.1", 0, tmp_path, commands)  # port 0: any free port
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     client = SimpleUDPClient("127.0.0.1", srv.server_address[1])
-    yield client, commands, tmp_path
+    yield client, commands, tmp_path, srv
     srv.shutdown()
     srv.server_close()
 
 
 def test_messages_become_commands(server):
-    client, commands, base = server
+    client, commands, base, _ = server
     client.send_message("/oscimagedisplay/image", ["a.png", 1.5])
     client.send_message("/oscimagedisplay/hide", [])
     client.send_message("/oscimagedisplay/color", [255, 0, 0])
@@ -30,10 +31,19 @@ def test_messages_become_commands(server):
 
 
 def test_bad_messages_are_dropped(server):
-    client, commands, _ = server
+    client, commands, _, _ = server
     client.send_message("/oscimagedisplay/image", "../a.png")
     client.send_message("/oscimagedisplay/image", 5)
     client.send_message("/something/else", 1)
     client.send_message("/oscimagedisplay/show", [])  # sentinel: arrives last
     assert commands.get(timeout=2) == Command("show")
     assert commands.empty()
+
+
+def test_server_is_single_threaded(server):
+    # A thread per packet can reorder messages sent back to back (seen in CI:
+    # hide applied before the image sent ahead of it). A UDP burst can't test
+    # this reliably (overflowing the socket buffer drops packets, and the race
+    # depends on core count), so assert the property directly.
+    srv = server[3]
+    assert not isinstance(srv, socketserver.ThreadingMixIn)

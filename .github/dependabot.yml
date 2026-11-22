@@ -4,6 +4,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    assignees:
+      - Pingue
     commit-message:
       prefix: "fix(deps)"
       prefix-development: "chore(deps-dev)"
@@ -15,6 +17,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    assignees:
+      - Pingue
     commit-message:
       prefix: "fix(deps)"
 
@@ -22,6 +26,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    assignees:
+      - Pingue
     commit-message:
       prefix: "ci(deps)"
     groups:
